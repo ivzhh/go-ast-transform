@@ -1,10 +1,12 @@
 package main
 
 import (
-	"bufio"
+	"fmt"
 	"go/ast"
 	"go/parser"
+	"go/printer"
 	"go/token"
+	"go/types"
 	"log"
 	"os"
 	"path"
@@ -44,24 +46,59 @@ func main() {
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, inputfile, nil, parser.ParseComments)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	rewritten := astrewrite.Walk(file, rewriter.RewriteStructArguments)
 
-	// var buf bytes.Buffer
-	// printer.Fprint(&buf, fset, rewritten)
-	// fmt.Println(buf.String())
+	{
+		for _, ident := range file.Unresolved {
+			log.Printf("unresolved object: %+v", *ident)
+		}
 
-	var f *os.File
+		var checker types.Config = types.Config{}
 
-	outputfile := filepath.Join(tmpdir, filepath.Base(inputfile))
+		info := types.Info{}
 
-	if f, err = os.Create(outputfile); err != nil {
-		log.Fatalf("create file: %+v", err)
+		var pkg *types.Package
+
+		if pkg, err = checker.Check(inputfile, fset, []*ast.File{file}, &info); err != nil {
+			log.Fatal(err)
+		}
+
+		log.Printf("types.Info: %+v", pkg.Complete())
 	}
 
-	log.Printf("output to %s", outputfile)
+	{
+		var f *os.File
 
-	ast.Fprint(bufio.NewWriter(f), fset, rewritten, nil)
+		fmtfile := filepath.Join(tmpdir, fmt.Sprintf("fmt-%s", filepath.Base(inputfile)))
+
+		if f, err = os.Create(fmtfile); err != nil {
+			log.Fatalf("create file: %+v", err)
+		}
+
+		printer.Fprint(f, fset, rewritten)
+
+		log.Printf("output to %s", fmtfile)
+
+		defer func() { f.Close() }()
+	}
+	{
+		var f *os.File
+
+		outputfile := filepath.Join(tmpdir, fmt.Sprintf("ast-%s", filepath.Base(inputfile)))
+
+		if f, err = os.Create(outputfile); err != nil {
+			log.Fatalf("create file: %+v", err)
+		}
+
+		log.Printf("output to %s", outputfile)
+
+		if err = ast.Fprint(f, fset, rewritten, nil); err != nil {
+			log.Fatalf("output ast to file: %+v", err)
+		}
+
+		defer func() { f.Close() }()
+	}
 }
