@@ -3,19 +3,16 @@ package main
 import (
 	"fmt"
 	"go/ast"
-	"go/parser"
 	"go/printer"
 	"go/token"
-	"go/types"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"reflect"
 
-	"github.com/ivzhh/go-ast-transform/rewriter"
-
 	"github.com/fatih/astrewrite"
+	"github.com/ivzhh/go-ast-transform/rewriter"
 )
 
 func main() {
@@ -44,22 +41,13 @@ func main() {
 	}
 
 	fset := token.NewFileSet()
-	file, err := parser.ParseFile(fset, inputfile, nil, parser.ParseComments)
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	rewritten := astrewrite.Walk(file, rewriter.RewriteReturnVars)
+	var err error
 
-	{
-		var checker types.Config = types.Config{}
+	r := rewriter.NewRewritter(fset)
+	fr := r.NewFileRewritter(inputfile)
 
-		info := types.Info{}
-
-		if _, err = checker.Check(inputfile, fset, []*ast.File{file}, &info); err != nil {
-			log.Fatal(err)
-		}
-	}
+	rewritten := astrewrite.Walk(fr.Original, fr.RewriteReturnVars())
 
 	{
 		var f *os.File

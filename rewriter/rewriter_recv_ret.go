@@ -2,8 +2,15 @@ package rewriter
 
 import (
 	"go/ast"
-	"go/token"
 )
+
+// FileRewriter is the context of rewriting process
+type FileRewriter struct {
+	ctx      *Rewriter
+	Original *ast.File
+
+	Wrapper *ast.File
+}
 
 // RewriteReturnVars handles a case like this
 //
@@ -12,16 +19,48 @@ import (
 //
 // func after(a struct { b, c, d int }, r *int)
 // ```
-func RewriteReturnVars(n ast.Node) (ast.Node, bool) {
-	_, ok := n.(*ast.FuncDecl)
-	if !ok {
+func (config *FileRewriter) RewriteReturnVars() func(n ast.Node) (ast.Node, bool) {
+	return func(n ast.Node) (ast.Node, bool) {
+		fd, ok := n.(*ast.FuncDecl)
+		if !ok {
+			return n, true
+		}
+
+		hasRewriteableRecv := false
+		if fd.Recv != nil || fd.Recv.NumFields() > 0 {
+			if len(fd.Recv.List) != 1 {
+				return n, false
+			}
+
+			recv := fd.Recv.List[0]
+
+			switch recv.Type.(type) {
+			case *ast.StarExpr:
+			case *ast.Ident:
+			}
+		}
+
+		if hasRewriteableRecv || fd.Type.Results != nil || fd.Type.Results.NumFields() > 0 {
+			config.ensureWrapperFile()
+		} else {
+			return n, true
+		}
+
 		return n, true
 	}
-
-	return n, true
 }
 
-type Rewriter struct {
-	Original *ast.File
-	Fset     *token.FileSet
+func (config *FileRewriter) ensureWrapperFile() {
+	if config.Wrapper == nil {
+		config.Wrapper = &ast.File{
+			Doc:        &ast.CommentGroup{},
+			Package:    config.Original.Package,
+			Name:       config.Original.Name,
+			Decls:      []ast.Decl{},
+			Scope:      ast.NewScope(nil),
+			Imports:    []*ast.ImportSpec{},
+			Unresolved: []*ast.Ident{},
+			Comments:   []*ast.CommentGroup{},
+		}
+	}
 }
