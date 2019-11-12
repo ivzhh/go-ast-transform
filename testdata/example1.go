@@ -12,3 +12,23 @@ func foo(a int, b *int, c struct{ e, f int }, d *struct{ e, f int }) (g struct{ 
 func bar(a int, b *int) (struct{ h, i float32 }, int) {
 	return struct{ h, i float32 }{1, 2}, 3
 }
+
+type A struct {
+	a, b int
+}
+
+func (a A) baz() {
+
+}
+func (a *A) baz2() {
+
+}
+
+func test() {
+	a := A{}
+
+	a.baz()
+	a.baz2()
+
+	(&a).baz()
+}

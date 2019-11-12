@@ -49,24 +49,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rewritten := astrewrite.Walk(file, rewriter.RewriteStructArguments)
+	rewritten := astrewrite.Walk(file, rewriter.RewriteReturnVars)
 
 	{
-		for _, ident := range file.Unresolved {
-			log.Printf("unresolved object: %+v", *ident)
-		}
-
 		var checker types.Config = types.Config{}
 
 		info := types.Info{}
 
-		var pkg *types.Package
-
-		if pkg, err = checker.Check(inputfile, fset, []*ast.File{file}, &info); err != nil {
+		if _, err = checker.Check(inputfile, fset, []*ast.File{file}, &info); err != nil {
 			log.Fatal(err)
 		}
-
-		log.Printf("types.Info: %+v", pkg.Complete())
 	}
 
 	{
