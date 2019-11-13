@@ -2,6 +2,7 @@ package rewriter
 
 import (
 	"go/ast"
+	"log"
 )
 
 // FileRewriter is the context of rewriting process
@@ -37,7 +38,19 @@ func (config *FileRewriter) RewriteReturnVars() func(n ast.Node) (ast.Node, bool
 			switch typ := recv.Type.(type) {
 			case *ast.StarExpr:
 			case *ast.Ident:
-				traceTypedef(typ)
+				isPointer, err := traceIsPointer(typ)
+
+				if err != nil {
+					log.Printf("fail to parse star expression")
+					return n, false
+				}
+
+				if !isPointer {
+					recv.Type = &ast.StarExpr{
+						X: typ,
+					}
+				}
+
 			}
 		}
 

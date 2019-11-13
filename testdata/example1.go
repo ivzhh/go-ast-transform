@@ -28,6 +28,10 @@ func (a *A) baz2() {
 
 func (b B) foo() {}
 
+type C A
+
+func (c C) baz() {}
+
 func test() {
 	a := A{}
 
@@ -39,4 +43,7 @@ func test() {
 	b := &A{}
 
 	b.foo()
+
+	d := func(c C) {}
+	d(C{})
 }

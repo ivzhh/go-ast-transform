@@ -1,6 +1,7 @@
 package rewriter
 
 import (
+	"fmt"
 	"go/ast"
 	"log"
 	"reflect"
@@ -22,7 +23,7 @@ func RewriteStructArguments(n ast.Node) (ast.Node, bool) {
 	return n, true
 }
 
-func traceTypedef(ident *ast.Ident) {
+func traceIsPointer(ident *ast.Ident) (bool, error) {
 	var definedFrom ast.Expr
 
 	switch spec := ident.Obj.Decl.(type) {
@@ -33,8 +34,14 @@ func traceTypedef(ident *ast.Ident) {
 		log.Fatalf("expected *ast.TypeSpec, but get %+v", reflect.TypeOf(spec))
 	}
 
-	switch definedFrom.(type) {
+	switch identFrom := definedFrom.(type) {
 	case *ast.StructType:
+		return false, nil
 	case *ast.StarExpr:
+		return true, nil
+	case *ast.Ident:
+		return traceIsPointer(identFrom)
 	}
+
+	return false, fmt.Errorf("typedef can only be *ast.StructType, *ast.StarExpr, *ast.Ident")
 }
