@@ -50,7 +50,6 @@ func (config *FileRewriter) RewriteReturnVars() func(n ast.Node) (ast.Node, bool
 						X: typ,
 					}
 				}
-
 			}
 		}
 

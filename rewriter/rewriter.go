@@ -6,6 +6,8 @@ import (
 	"go/token"
 	"go/types"
 	"log"
+
+	"github.com/fatih/astrewrite"
 )
 
 // Rewriter provides a shared context for all rewriting
@@ -50,4 +52,25 @@ func (r *Rewriter) NewFileRewritter(inputfile string) *FileRewriter {
 		Original: file,
 		Wrapper:  nil,
 	}
+}
+
+// RewriteforTranspiler outputs an ast.File that fits into transpiler
+func (fr *FileRewriter) RewriteforTranspiler() ast.Node {
+	rewritten := astrewrite.Walk(fr.Original, fr.RewriteReturnVars())
+
+	rewritterFile, ok := rewritten.(*ast.File)
+
+	if !ok {
+		log.Fatal("should return a ast.File")
+	}
+
+	var err error
+	var checker types.Config = types.Config{}
+	info := types.Info{}
+
+	if _, err = checker.Check("", fr.ctx.Fset, []*ast.File{rewritterFile}, &info); err != nil {
+		log.Fatal(err)
+	}
+
+	return rewritten
 }

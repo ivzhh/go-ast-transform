@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"reflect"
 
-	"github.com/fatih/astrewrite"
 	"github.com/ivzhh/go-ast-transform/rewriter"
 )
 
@@ -47,7 +46,7 @@ func main() {
 	r := rewriter.NewRewritter(fset)
 	fr := r.NewFileRewritter(inputfile)
 
-	rewritten := astrewrite.Walk(fr.Original, fr.RewriteReturnVars())
+	rewritten := fr.RewriteforTranspiler()
 
 	{
 		var f *os.File

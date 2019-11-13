@@ -29,7 +29,6 @@ func traceIsPointer(ident *ast.Ident) (bool, error) {
 	switch spec := ident.Obj.Decl.(type) {
 	case *ast.TypeSpec:
 		definedFrom = spec.Type
-		log.Printf("%+v", reflect.TypeOf(definedFrom))
 	default:
 		log.Fatalf("expected *ast.TypeSpec, but get %+v", reflect.TypeOf(spec))
 	}
