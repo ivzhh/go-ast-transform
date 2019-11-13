@@ -34,9 +34,10 @@ func (config *FileRewriter) RewriteReturnVars() func(n ast.Node) (ast.Node, bool
 
 			recv := fd.Recv.List[0]
 
-			switch recv.Type.(type) {
+			switch typ := recv.Type.(type) {
 			case *ast.StarExpr:
 			case *ast.Ident:
+				traceTypedef(typ)
 			}
 		}
 

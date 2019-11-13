@@ -2,6 +2,8 @@ package rewriter
 
 import (
 	"go/ast"
+	"log"
+	"reflect"
 )
 
 // RewriteStructArguments handles a case like this
@@ -20,6 +22,19 @@ func RewriteStructArguments(n ast.Node) (ast.Node, bool) {
 	return n, true
 }
 
-func isRewriteableFunc(fd *ast.FuncDecl) bool {
-	return true
+func traceTypedef(ident *ast.Ident) {
+	var definedFrom ast.Expr
+
+	switch spec := ident.Obj.Decl.(type) {
+	case *ast.TypeSpec:
+		definedFrom = spec.Type
+		log.Printf("%+v", reflect.TypeOf(definedFrom))
+	default:
+		log.Fatalf("expected *ast.TypeSpec, but get %+v", reflect.TypeOf(spec))
+	}
+
+	switch definedFrom.(type) {
+	case *ast.StructType:
+	case *ast.StarExpr:
+	}
 }

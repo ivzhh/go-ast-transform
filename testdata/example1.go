@@ -17,12 +17,16 @@ type A struct {
 	a, b int
 }
 
+type B = *A
+
 func (a A) baz() {
 
 }
 func (a *A) baz2() {
 
 }
+
+func (b B) foo() {}
 
 func test() {
 	a := A{}
@@ -31,4 +35,8 @@ func test() {
 	a.baz2()
 
 	(&a).baz()
+
+	b := &A{}
+
+	b.foo()
 }
